@@ -1,8 +1,8 @@
-import SendOTP from "./components/common/sendOTP";
-
+import Home from "./components/common/Home";
 function App(){
-  return(<>
-  <SendOTP/>
+  return(
+  <>
+    <Home/>
   </>
   )
 }
