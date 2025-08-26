@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import Typed from "typed.js";
+import { IoMdMenu, IoMdClose } from "react-icons/io";
+
 function Home() {
   useEffect(() => {
     const typed = new Typed('#typed-element', {
-      strings: ['Role Based Access','Real Time Whiteboard Collaborator', 'Web Based Video Confrencing.'],
+      strings: ['Multi Tenant Support','Role Based Access', 'Real Time Whiteboard Collaboration', 'Web Based Video Conferencing'],
       typeSpeed: 50,
       backSpeed: 30,
       backDelay: 1000,
@@ -18,38 +20,122 @@ function Home() {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
-    <div>
-      <div className="w-full h-32 flex items-center bg-white border-2 border-solid shadow-md border-t-0 p-4 sm:px-6 md:px-12">
-        <div className="flex items-center justify-between w-full">
-          <div className="sm:hidden flex items-center cursor-pointer" onClick={toggleMenu}>
-            <div className="w-6 h-1 bg-black mb-1"></div>
-            <div className="w-6 h-1 bg-black mb-1"></div>
-            <div className="w-6 h-1 bg-black"></div>
+    <div className="min-h-screen bg-[#f3f3f3]">
+      {/* Navbar */}
+      <nav className="w-full h-20 fixed top-0 bg-white border-b-2 shadow-md z-50">
+        <div className="flex items-center justify-between h-full px-4 sm:px-6 md:px-12 max-w-7xl mx-auto">
+          {/* Logo placeholder */}
+          <div className="text-3xl font-bold text-[#48C4D3]">InteractHub</div>
+
+          {/* Menu Toggler (For mobile screens) */}
+          <button 
+            className="sm:hidden flex items-center p-2"
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? (
+              <IoMdClose className="text-2xl" />
+            ) : (
+              <IoMdMenu className="text-2xl" />
+            )}
+          </button>
+
+          {/* Navigation Links (Visible on larger screens) */}
+          <div className="hidden sm:flex items-center space-x-8">
+            <a href="#Home" className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold">
+              Home
+            </a>
+            <a href="#" className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold">
+              About
+            </a>
+            <a href="#" className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold">
+              Contact Me
+            </a>
+            <a href="#" className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold">
+              Features
+            </a>
           </div>
-          <div className="text-lg hidden sm:flex sm:space-x-8 sm:ml-0 sm:text-center">
-            <a href="" className="hover:text-gray-700 hover:text-xl">Home</a>
-            <a href="" className="hover:text-gray-700 hover:text-xl">About</a>
-            <a href="" className="hover:text-gray-700 hover:text-xl">Contact Me</a>
-            <a href="" className="hover:text-gray-700 hover:text-xl">Features</a>
+
+          {/* Login/Register (Visible on larger screens) */}
+          <div className="hidden sm:flex items-center space-x-4">
+            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7] transition-colors">
+              Login
+            </button>
+            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7] transition-colors">
+              Register
+            </button>
           </div>
         </div>
-        {isMenuOpen && (
-          <div className="sm:hidden flex flex-col items-center space-y-2 mt-4">
-            <button className="m-1 bg-[#48C4D3] w-24 h-12 rounded-full">Login</button>
-            <button className="m-1 bg-[#48C4D3] w-24 h-12 rounded-full">Register</button>
+
+        {/* Mobile Menu */}
+        <div 
+          className={`sm:hidden absolute top-16 left-0 w-full bg-white shadow-lg transition-all duration-300 ease-in-out ${
+            isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
+          }`}
+        >
+          <div className="flex flex-col items-center py-4 space-y-4">
+            <a 
+              href="#Home" 
+              className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold"
+              onClick={toggleMenu}
+            >
+              Home
+            </a>
+            <a 
+              href="#" 
+              className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold"
+              onClick={toggleMenu}
+            >
+              About
+            </a>
+            <a 
+              href="#" 
+              className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold"
+              onClick={toggleMenu}
+            >
+              Contact Me
+            </a>
+            <a 
+              href="#" 
+              className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold"
+              onClick={toggleMenu}
+            >
+              Features
+            </a>
+            <button 
+              className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7] transition-colors"
+              onClick={toggleMenu}
+            >
+              Login
+            </button>
+            <button 
+              className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7] transition-colors"
+              onClick={toggleMenu}
+            >
+              Register
+            </button>
           </div>
-        )}
-        <div className="hidden sm:flex ml-auto mr-32">
-          <button className="m-1 bg-[#48C4D3] w-24 h-12 rounded-full">Login</button>
-          <button className="m-1 bg-[#48C4D3] w-24 h-12 rounded-full ml-5">Register</button>
         </div>
-      </div>
-      <div className="mt-8 text-center">
-          <h1 className="text-3xl font-semibold">Welcome to InteractHub</h1>
-          <p className="text-xl mt-4">
-            <span id="typed-element"></span>
+      </nav>
+
+      {/* Main Content */}
+      <div className="pt-20">
+        <div className="mt-8 mb-8 text-center" id="Home">
+          <h1 className="text-5xl font-semibold text-pretty text-[#48C4D3]">Welcome to InteractHub</h1>
+          <p className="text-2xl mt-6 mb-6">
+            <span id="typed-element" className="text-[#2D2D2D] font-semibold"></span>
           </p>
         </div>
+      </div>
+      {/* About */}
+      <div>
+        <h1 className="m-10 text-4xl text-[#48C4D3] font-bold">About Us</h1>
+      </div>
+      {/* Slider (Features) */}
+      <div>
+
+      </div>
+      <footer />
     </div>
   );
 }
