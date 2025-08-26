@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import Typed from "typed.js";
 import { IoMdMenu, IoMdClose } from "react-icons/io";
+import AboutInteractHub from "./AboutUs";
+import Features from "./Features";
+import Footer from "../common/footer";
 
 function Home() {
   useEffect(() => {
@@ -45,10 +48,10 @@ function Home() {
             <a href="#Home" className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold">
               Home
             </a>
-            <a href="#" className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold">
+            <a href="#About" className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold">
               About
             </a>
-            <a href="#" className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold">
+            <a href="#features" className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold">
               Contact Me
             </a>
             <a href="#" className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold">
@@ -82,7 +85,7 @@ function Home() {
               Home
             </a>
             <a 
-              href="#" 
+              href="#About" 
               className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold"
               onClick={toggleMenu}
             >
@@ -96,7 +99,7 @@ function Home() {
               Contact Me
             </a>
             <a 
-              href="#" 
+              href="#features" 
               className="text-lg hover:text-gray-700 transition-all duration-200 hover:font-semibold"
               onClick={toggleMenu}
             >
@@ -119,23 +122,24 @@ function Home() {
       </nav>
 
       {/* Main Content */}
-      <div className="pt-20">
-        <div className="mt-8 mb-8 text-center" id="Home">
-          <h1 className="text-5xl font-semibold text-pretty text-[#48C4D3]">Welcome to InteractHub</h1>
+      <div className="pt-20" id="Home">
+        <div className="mt-8 mb-8 text-center">
+          <h1 className="text-4xl font-bold text-slate-700">Welcome To</h1>
+          <h1 className="text-6xl font-semibold text-[#48C4D3]">InteractHub</h1>
           <p className="text-2xl mt-6 mb-6">
             <span id="typed-element" className="text-[#2D2D2D] font-semibold"></span>
           </p>
         </div>
       </div>
       {/* About */}
-      <div>
-        <h1 className="m-10 text-4xl text-[#48C4D3] font-bold">About Us</h1>
+      <div id="About">
+        <AboutInteractHub/>
       </div>
       {/* Slider (Features) */}
-      <div>
-
+      <div id="features" className="m-14">
+        <Features/>
       </div>
-      <footer />
+      <Footer/>
     </div>
   );
 }
