@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import Typed from "typed.js";
 import { IoMdMenu, IoMdClose } from "react-icons/io";
+import { Link } from "react-scroll";
 import AboutInteractHub from "./AboutUs";
 import Features from "./Features";
 import Footer from "../common/footer";
 import LoginModal from "../common/Login";
 import { ToastContainer } from "react-toastify";
+import RegisterModal from "../common/Register";
 
 function Home() {
   useEffect(() => {
@@ -22,7 +24,8 @@ function Home() {
   }, []);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false); // ✅ Modal state
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -38,20 +41,21 @@ function Home() {
           </button>
 
           <div className="hidden sm:flex items-center space-x-8">
-            <a href="#Home">Home</a>
-            <a href="#About">About</a>
-            <a href="#features">Contact Me</a>
-            <a href="#">Features</a>
+            <Link to="Home" smooth={true} duration={500} className="cursor-pointer hover:text-xl hover:text-gray-500">Home</Link>
+            <Link to="About" smooth={true} duration={500} className="cursor-pointer hover:text-xl hover:text-gray-500">About</Link>
+            <Link to="features" smooth={true} duration={500} className="cursor-pointer hover:text-xl hover:text-gray-500">Features</Link>
+            <Link to="contact" smooth={true} duration={500} className="cursor-pointer hover:text-xl hover:text-gray-500">Contact Me</Link>
+
           </div>
 
           <div className="hidden sm:flex items-center space-x-4">
             <button
               className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7] transition-colors"
-              onClick={() => setShowLoginModal(true)} // ✅ Open modal
+              onClick={() => setShowLoginModal(true)}
             >
               Login
             </button>
-            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7] transition-colors">
+            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7] transition-colors" onClick={()=>setShowRegisterModal(true)}>
               Register
             </button>
           </div>
@@ -60,14 +64,14 @@ function Home() {
         {/* Mobile Menu */}
         <div className={`sm:hidden absolute top-16 left-0 w-full bg-white shadow-lg transition-all duration-300 ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'}`}>
           <div className="flex flex-col items-center py-4 space-y-4">
-            <a href="#Home" onClick={toggleMenu}>Home</a>
-            <a href="#About" onClick={toggleMenu}>About</a>
-            <a href="#" onClick={toggleMenu}>Contact Me</a>
-            <a href="#features" onClick={toggleMenu}>Features</a>
+            <Link to="Home" smooth={true} duration={500} onClick={toggleMenu}>Home</Link>
+            <Link to="About" smooth={true} duration={500} onClick={toggleMenu}>About</Link>
+            <Link to="features" smooth={true} duration={500} onClick={toggleMenu}>Features</Link>
+            <Link to="contact" smooth={true} duration={500} onClick={toggleMenu}>Contact Me</Link>
             <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]" onClick={() => { toggleMenu(); setShowLoginModal(true); }}>
               Login
             </button>
-            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]">
+            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]" onClick={()=> {toggleMenu(); setShowRegisterModal(true)}}>
               Register
             </button>
           </div>
@@ -84,14 +88,15 @@ function Home() {
           </p>
         </div>
       </div>
-
-      {/* Other sections */}
       <div id="About"><AboutInteractHub /></div>
       <div id="features" className="m-14"><Features /></div>
-      <Footer />
+      <div id="contact">
+        <Footer />
+      </div>     
 
-      {/* ✅ Login Modal */}
+      {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+      {showRegisterModal && <RegisterModal onClose={()=> setShowRegisterModal(true)}/>}
 
       <ToastContainer />
     </div>

@@ -29,7 +29,7 @@ function LoginModal({ onClose }) {
 
     if (!passwordRegex.test(password)) {
       toast.error(
-        "Password must be at least 8 characters, include 1 uppercase, 1 number, and 1 special character!"
+        "Password must be at least 8 characters, include one uppercase, one number, and one special character($&@#_-+%^*!)."
       );
       return;
     }
