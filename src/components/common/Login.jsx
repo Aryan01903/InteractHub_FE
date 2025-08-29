@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import axiosInstance from "../api/axios";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import PropTypes from 'prop-types';
+import { useNavigate } from "react-router-dom";
 
 
 const passwordRegex =
@@ -18,6 +19,7 @@ function LoginModal({ onClose }) {
     onClose: PropTypes.func.isRequired,
   };
 
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -41,13 +43,16 @@ function LoginModal({ onClose }) {
         password,
       });
 
-      if (!res.data?.accessToken) {
-        toast.error("No token received. Something went wrong!");
+      if (!res.data?.token) {
+        toast.error("something went wrong. please try again later!");
         return;
       }
-
-      localStorage.setItem("token", res.data.accessToken);
-      toast.success("Login Successful");
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.role);
+      localStorage.setItem("name", res.data.name);
+      localStorage.setItem("tenantName", res.data.tenantName);
+      toast.success("Login Successful!!!");
+      navigate("/dashboard")
       onClose();
     } catch (err) {
         console.error("error is : ",err)
@@ -100,6 +105,7 @@ function LoginModal({ onClose }) {
           </button>
         </form>
       </div>
+      <ToastContainer/>
     </div>
   );
 }

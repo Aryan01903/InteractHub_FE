@@ -96,7 +96,7 @@ function Home() {
 
       {/* Login Modal */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-      {showRegisterModal && <RegisterModal onClose={()=> setShowRegisterModal(true)}/>}
+      {showRegisterModal && <RegisterModal onClose={()=> setShowRegisterModal(false)}/>}
 
       <ToastContainer />
     </div>
