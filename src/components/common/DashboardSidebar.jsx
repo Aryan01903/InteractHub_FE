@@ -5,9 +5,13 @@ import { useNavigate } from "react-router-dom";
 
 export default function DashboardSidebar() {
   const [isSidebarOpen, setSidebarOpen] = useState(false); 
-  const navigate= useNavigate()
+  const navigate = useNavigate();
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
+
+  const handleNavigate = (path) => {
+    navigate(path);
+  };
 
   return (
     <>
@@ -30,9 +34,21 @@ export default function DashboardSidebar() {
         <div className="flex flex-col items-start p-6 space-y-6">
           {/* Sidebar Links */}
           <div className="w-full flex flex-col space-y-4">
-            <SidebarLink icon={<IoHomeOutline />} label="Dashboard" onClick={()=>navigate("/dashboard")}/>
-            <SidebarLink icon={<IoCreateOutline />} label="WhiteBoard" />
-            <SidebarLink icon={<IoVideocamOutline />} label="Video Interaction" />
+            <SidebarLink
+              icon={<IoHomeOutline />}
+              label="Dashboard"
+              onClick={() => handleNavigate("/dashboard")}
+            />
+            <SidebarLink
+              icon={<IoCreateOutline />}
+              label="WhiteBoard"
+              onClick={() => handleNavigate("/whiteboard")}
+            />
+            <SidebarLink 
+              icon={<IoVideocamOutline />}
+              label="Video Interaction"
+              onClick={()=> handleNavigate("/video-call")}  
+            />
             <SidebarLink icon={<IoInformationCircleOutline />} label="About InteractHub" />
           </div>
         </div>
@@ -41,9 +57,12 @@ export default function DashboardSidebar() {
   );
 }
 
-function SidebarLink({ icon, label }) {
+function SidebarLink({ icon, label, onClick }) {
   return (
-    <div className="flex items-center space-x-4 text-xl font-medium text-[#333333] hover:bg-[#f1f1f1] hover:text-[#3AABB7] p-3 rounded-md cursor-pointer transition-all duration-200 mt-20">
+    <div
+      className="flex items-center space-x-4 text-xl font-medium text-[#333333] hover:bg-[#f1f1f1] hover:text-[#3AABB7] p-3 rounded-md cursor-pointer transition-all duration-200 mt-20"
+      onClick={onClick} // Handle click here
+    >
       <div className="text-2xl">{icon}</div>
       <span>{label}</span>
     </div>
@@ -54,4 +73,5 @@ function SidebarLink({ icon, label }) {
 SidebarLink.propTypes = {
   icon: PropTypes.element.isRequired, // Icon should be a React element
   label: PropTypes.string.isRequired, // Label should be a string
+  onClick: PropTypes.func.isRequired, // Click handler
 };

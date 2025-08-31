@@ -8,8 +8,17 @@ import Footer from "../common/footer";
 import LoginModal from "../common/Login";
 import { ToastContainer } from "react-toastify";
 import RegisterModal from "../common/Register";
+import { useNavigate } from "react-router-dom";
 
 function Home() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/dashboard");
+      return;
+    }
+  })
   useEffect(() => {
     const typed = new Typed('#typed-element', {
       strings: ['Multi Tenant Support','Role Based Access', 'Real Time Whiteboard Collaboration', 'Web Based Video Conferencing'],

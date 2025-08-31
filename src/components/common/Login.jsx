@@ -51,6 +51,7 @@ function LoginModal({ onClose }) {
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("name", res.data.name);
       localStorage.setItem("tenantName", res.data.tenantName);
+      localStorage.setItem("tenantId",res.data.tenantId);
       toast.success("Login Successful!!!");
       navigate("/dashboard")
       onClose();

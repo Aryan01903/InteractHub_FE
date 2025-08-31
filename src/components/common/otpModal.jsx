@@ -48,6 +48,7 @@ function OTP({ onClose, email, tenantName, tenantId }) {
       localStorage.setItem("role", res.data.role);
       localStorage.setItem("name", res.data.name);
       localStorage.setItem("tenantName", res.data.tenantName);
+      localStorage.setItem("tenantId",res.data.tenantId)
       toast.success("User Registered Successfully!!!");
       navigate("/Dashboard");
       if (onClose) onClose();

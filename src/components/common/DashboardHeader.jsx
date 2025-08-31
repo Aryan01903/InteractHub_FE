@@ -10,6 +10,7 @@ export default function DashboardHeader() {
     localStorage.removeItem("role");
     localStorage.removeItem("name");
     localStorage.removeItem("tenantName");
+    localStorage.removeItem("tenantId");
     navigate("/");
   };
 
