@@ -59,12 +59,12 @@ function Home() {
 
           <div className="hidden sm:flex items-center space-x-4">
             <button
-              className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7] transition-colors"
+              className="bg-[#48C4D3] w-24 h-10 rounded-full text-white font-medium hover:bg-[#3aabb7] transition-colors"
               onClick={() => setShowLoginModal(true)}
             >
               Login
             </button>
-            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7] transition-colors" onClick={()=>setShowRegisterModal(true)}>
+            <button className="bg-[#48C4D3] w-24 h-10 rounded-full text-white font-medium hover:bg-[#3aabb7] transition-colors" onClick={()=>setShowRegisterModal(true)}>
               Register
             </button>
           </div>

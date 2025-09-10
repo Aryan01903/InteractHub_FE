@@ -15,7 +15,7 @@ export default function WhiteboardPage() {
   const [whiteboard, setWhiteboard] = useState(null);
   const [loader, setLoader] = useState(false);
   const [error, setError] = useState(null);
-  const [connectionError, setConnectionError] = useState(null); // For Socket.IO errors
+  const [connectionError, setConnectionError] = useState(null);
   const canvasRef = useRef(null);
   const cursorCanvasRef = useRef(null);
   const [brushSize, setBrushSize] = useState(2);
@@ -27,7 +27,7 @@ export default function WhiteboardPage() {
   const prevPos = useRef(null);
   const currentStrokeId = useRef(null);
   const lastStrokeId = useRef(null);
-
+  const updateBuffer = useRef([]);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -38,11 +38,10 @@ export default function WhiteboardPage() {
     });
     const socket = socketRef.current;
 
-    socket.emit("joinBoard", id);
-
     socket.on("connect", () => {
       console.log("Connected/Reconnected, joining board:", id);
       socket.emit("joinBoard", id);
+      socket.emit("requestInitialState", id);
       setConnectionError(null);
     });
 
@@ -51,40 +50,56 @@ export default function WhiteboardPage() {
       setConnectionError("Failed to connect to server. Retrying...");
     });
 
-    socket.on("whiteboardUpdate", (data) => {
-      console.log("Received whiteboardUpdate:", data);
-      const ctx = canvasRef.current?.getContext("2d");
-      if (!ctx) return;
-
-      ctx.strokeStyle = data.eraser ? "#FFF" : data.color;
-      ctx.lineWidth = data.size;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.globalCompositeOperation = data.eraser ? "destination-out" : "source-over";
-
-      if (data.strokeId !== lastStrokeId.current || data.isNewStroke) {
-        ctx.beginPath();
-        ctx.moveTo(data.x0, data.y0);
-      } else {
-        ctx.moveTo(data.x0, data.y0);
-      }
-      ctx.lineTo(data.x1, data.y1);
-      ctx.stroke();
-      lastStrokeId.current = data.strokeId;
-    });
-
     socket.on("initialWhiteboardState", ({ data }) => {
       console.log("Received initialWhiteboardState");
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!ctx) return;
+
       const img = new Image();
       img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
         saveHistory();
       };
       img.src = data;
+    });
+
+    socket.on("whiteboardUpdate", (data) => {
+      updateBuffer.current.push({ ...data, timestamp: data.timestamp || Date.now() });
+      updateBuffer.current.sort((a, b) => a.timestamp - b.timestamp);
+      const ctx = canvasRef.current?.getContext("2d");
+      if (!ctx) return;
+
+      while (updateBuffer.current.length > 0) {
+        const update = updateBuffer.current.shift();
+        console.log("Processing whiteboardUpdate:", {
+          strokeId: update.strokeId,
+          isNewStroke: update.isNewStroke,
+          x0: update.x0,
+          y0: update.y0,
+          x1: update.x1,
+          y1: update.y1,
+        });
+
+        // Only start a new path if strokeId changes or it's explicitly a new stroke
+        if (update.strokeId !== lastStrokeId.current || update.isNewStroke) {
+          ctx.beginPath();
+          ctx.moveTo(update.x0, update.y0);
+        }
+
+        ctx.strokeStyle = update.eraser ? "#FFF" : update.color;
+        ctx.lineWidth = update.size;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.globalCompositeOperation = update.eraser ? "destination-out" : "source-over";
+
+        ctx.lineTo(update.x1, update.y1);
+        ctx.stroke();
+        lastStrokeId.current = update.strokeId;
+      }
     });
 
     return () => socket.disconnect();
@@ -123,6 +138,7 @@ export default function WhiteboardPage() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
         setHistoryStep((hs) => hs - 1);
+        debouncedSave();
       };
     }
   };
@@ -132,8 +148,8 @@ export default function WhiteboardPage() {
       if (!canvasRef.current) return;
       const data = canvasRef.current.toDataURL("image/png", 0.8);
       try {
-        await axiosInstance.put(`/whiteboard/update/${id}`, { data });
-        console.log("Auto-saved whiteboard");
+        await axiosInstance.put(`/whiteboard/update/${id}`, { data, version: true });
+        console.log("Auto-saved whiteboard with version");
       } catch (error) {
         console.error("Auto-save failed:", error.message);
       }
@@ -170,7 +186,7 @@ export default function WhiteboardPage() {
   const handleMouseDown = (e) => {
     const pos = getMousePos(e);
     const ctx = canvasRef.current.getContext("2d");
-    ctx.beginPath();
+    ctx.beginPath(); // Start a new path
     ctx.moveTo(pos.x, pos.y);
     ctx.lineWidth = brushSize;
     ctx.strokeStyle = isEraser ? "#FFF" : brushColor;
@@ -181,13 +197,30 @@ export default function WhiteboardPage() {
     prevPos.current = pos;
     currentStrokeId.current = uuidv4();
     drawCursor(pos.x, pos.y);
+
+    // Emit the start of a new stroke
+    throttledEmit({
+      boardId: id,
+      data: {
+        x0: pos.x,
+        y0: pos.y,
+        x1: pos.x,
+        y1: pos.y,
+        color: brushColor,
+        size: brushSize,
+        eraser: isEraser,
+        strokeId: currentStrokeId.current,
+        isNewStroke: true,
+        timestamp: Date.now(),
+      },
+    });
   };
 
   const throttledEmit = useCallback(
     throttle((emitData) => {
       socketRef.current.emit("whiteboardUpdate", emitData);
       console.log("Emitted whiteboardUpdate:", emitData);
-    }, 50),
+    }, 20),
     []
   );
 
@@ -195,6 +228,7 @@ export default function WhiteboardPage() {
     const pos = getMousePos(e);
     drawCursor(pos.x, pos.y);
     if (!drawing.current) return;
+
     const ctx = canvasRef.current.getContext("2d");
     ctx.lineTo(pos.x, pos.y);
     ctx.stroke();
@@ -210,23 +244,24 @@ export default function WhiteboardPage() {
         size: brushSize,
         eraser: isEraser,
         strokeId: currentStrokeId.current,
-        isNewStroke: prevPos.current.x === pos.x && prevPos.current.y === pos.y,
+        isNewStroke: false, // Continuation of the current stroke
+        timestamp: Date.now(),
       },
     });
 
     prevPos.current = pos;
-    debouncedSave();
   };
 
   const handleMouseUp = () => {
     if (drawing.current) {
       const ctx = canvasRef.current.getContext("2d");
-      ctx.closePath();
+      ctx.closePath(); // Explicitly close the path
       saveHistory();
       drawing.current = false;
       currentStrokeId.current = null;
       const cursorCtx = cursorCanvasRef.current.getContext("2d");
       cursorCtx.clearRect(0, 0, cursorCanvasRef.current.width, cursorCanvasRef.current.height);
+      debouncedSave();
     }
   };
 
@@ -262,7 +297,10 @@ export default function WhiteboardPage() {
       ) : (
         <>
           <div className="flex gap-3 mb-4 justify-center">
-            <button onClick={() => navigate(-1)} className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-full shadow hover:bg-gray-600 transition">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-full shadow hover:bg-gray-600 transition"
+            >
               <BiArrowBack /> Back
             </button>
             <button

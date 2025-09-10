@@ -16,8 +16,7 @@ function Footer() {
           <li className="flex items-center gap-3">
             <MdEmail className="text-pink-400 text-2xl" />
             <span>
-              main.aryanshrivastav2003@gmail.com <br />
-              projectdeveloper25@gmail.com
+              main.aryanshrivastav2003@gmail.com
             </span>
           </li>
           <li className="flex items-center gap-3">

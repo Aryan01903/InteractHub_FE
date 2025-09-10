@@ -57,7 +57,7 @@ function LoginModal({ onClose }) {
       onClose();
     } catch (err) {
         console.error("error is : ",err)
-      toast.error(err.response?.data?.message || "Login failed");
+      toast.error(err.response?.data?.message || "Invalid Credential or User doesn't exist");
     } finally {
       setLoader(false);
     }
