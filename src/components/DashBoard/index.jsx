@@ -12,6 +12,7 @@ export default function Dashboard() {
 
     const name = localStorage.getItem("name");
     const tenantName = localStorage.getItem("tenantName");
+    const userRole = localStorage.getItem("role")
 
     const handleInvitation = async (e) => {
         e.preventDefault();
@@ -73,6 +74,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Invite Section */}
+                    {userRole==="admin" && (
                     <div className="mt-10 text-[#333333]">
                         <h3 className="font-semibold text-2xl mb-4">
                             Invite Joinees
@@ -111,6 +113,7 @@ export default function Dashboard() {
                             </button>
                         </form>
                     </div>
+                    )}
                 </section>
             </div>
 

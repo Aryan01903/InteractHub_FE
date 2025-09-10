@@ -244,12 +244,14 @@ export default function VideoCall({ roomId }) {
           )}
 
           <div className="flex gap-2 flex-wrap mb-4">
-            <button
-              onClick={() => setMembersModalOpen(true)}
-              className="px-3 py-1 bg-[#3aabb7] text-white rounded"
-            >
-              Invite Members
-            </button>
+            {role==="admin"&&(
+              <button
+                onClick={() => setMembersModalOpen(true)}
+                className="px-3 py-1 bg-[#3aabb7] text-white rounded"
+              >
+                Invite Members
+              </button>
+            )}
             <button
               onClick={toggleCamera}
               className="px-3 py-1 bg-[#3aabb7] text-white rounded"
