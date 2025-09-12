@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../api/axios";
 import Loader from "../common/Loader";
-import { MdOutlineRememberMe, MdOutlineUpdate, MdEmail } from "react-icons/md";
+import { MdOutlineRememberMe, MdOutlineUpdate, MdEmail, MdDelete } from "react-icons/md";
 import { FaBriefcase } from "react-icons/fa";
 
 export default function MemberListingTable() {
@@ -39,6 +39,31 @@ export default function MemberListingTable() {
             });
     }, [token]);
 
+    const handleDelete = async (e, email) => {
+        e.stopPropagation();
+        const confirmDelete = window.confirm("Are you sure you want to delete this member?");
+        if (confirmDelete) {
+            try {
+                const res = await axiosInstance.delete("/auth/members/delete", {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    data: { email },
+                });
+
+                if (res.data.message === "Member deleted successfully") {
+                    setData((prevData) => prevData.filter((member) => member.email !== email));
+                } else {
+                    setError("Failed to delete member");
+                }
+            } catch (error) {
+                setError(
+                    error?.response?.data?.message || error.message || "An error occurred"
+                );
+            }
+        }
+    };
+
     if (loading) return <Loader />;
     if (error) return <div className="text-red-500 text-center">{error}</div>;
 
@@ -71,6 +96,11 @@ export default function MemberListingTable() {
                                     <FaBriefcase className="inline-block mr-2 text-gray-600" />
                                     Role
                                 </th>
+                                {userRole === "admin" && (
+                                    <th className="px-6 py-3 text-left font-medium border border-gray-300">
+                                        Action
+                                    </th>
+                                )}
                             </tr>
                         </thead>
 
@@ -79,9 +109,7 @@ export default function MemberListingTable() {
                                 <tr
                                     key={member.name || `${member.name}-${index}`}
                                     className={`transition-colors ${
-                                        index % 2 === 0
-                                            ? "bg-white"
-                                            : "bg-gray-50"
+                                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
                                     } hover:bg-gray-100`}
                                 >
                                     <td className="px-6 py-3 text-sm border border-gray-300">
@@ -98,6 +126,16 @@ export default function MemberListingTable() {
                                     <td className="px-6 py-3 text-sm border border-gray-300">
                                         {member.role}
                                     </td>
+                                    {userRole === "admin" && (
+                                        <td className="px-6 py-3 text-sm border border-gray-300">
+                                            <button
+                                                onClick={(e) => handleDelete(e, member.email)}
+                                                className="text-red-500 hover:text-red-700 text-xl hover:text-2xl"
+                                            >
+                                                <MdDelete/>
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

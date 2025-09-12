@@ -5,9 +5,7 @@ import { Link } from "react-scroll";
 import AboutInteractHub from "./AboutUs";
 import Features from "./Features";
 import Footer from "../common/footer";
-import LoginModal from "../common/Login";
 import { ToastContainer } from "react-toastify";
-import RegisterModal from "../common/Register";
 import { useNavigate } from "react-router-dom";
 
 function Home() {
@@ -33,8 +31,6 @@ function Home() {
   }, []);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -60,11 +56,11 @@ function Home() {
           <div className="hidden sm:flex items-center space-x-4">
             <button
               className="bg-[#48C4D3] w-24 h-10 rounded-full text-white font-medium hover:bg-[#3aabb7] transition-colors"
-              onClick={() => setShowLoginModal(true)}
+              onClick={() => navigate("/login")}
             >
               Login
             </button>
-            <button className="bg-[#48C4D3] w-24 h-10 rounded-full text-white font-medium hover:bg-[#3aabb7] transition-colors" onClick={()=>setShowRegisterModal(true)}>
+            <button className="bg-[#48C4D3] w-24 h-10 rounded-full text-white font-medium hover:bg-[#3aabb7] transition-colors" onClick={()=>navigate("/register")}>
               Register
             </button>
           </div>
@@ -77,10 +73,10 @@ function Home() {
             <Link to="About" smooth={true} duration={500} onClick={toggleMenu}>About</Link>
             <Link to="features" smooth={true} duration={500} onClick={toggleMenu}>Features</Link>
             <Link to="contact" smooth={true} duration={500} onClick={toggleMenu}>Contact Me</Link>
-            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]" onClick={() => { toggleMenu(); setShowLoginModal(true); }}>
+            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]" onClick={() => { toggleMenu(); navigate("/login") }}>
               Login
             </button>
-            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]" onClick={()=> {toggleMenu(); setShowRegisterModal(true)}}>
+            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]" onClick={()=> {toggleMenu(); navigate("/register")}}>
               Register
             </button>
           </div>
@@ -102,10 +98,6 @@ function Home() {
       <div id="contact">
         <Footer />
       </div>     
-
-      {/* Login Modal */}
-      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-      {showRegisterModal && <RegisterModal onClose={()=> setShowRegisterModal(false)}/>}
 
       <ToastContainer />
     </div>
