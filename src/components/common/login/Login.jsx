@@ -19,14 +19,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [togglePassword, setTogglePassword] = useState(false);
 
-  // flow management
-  const [flow, setFlow] = useState(null); // "login" | "forgotpassword"
-  const [step, setStep] = useState(null); // "email" | "otp" | "reset"
+  const [flow, setFlow] = useState(null);
+  const [step, setStep] = useState(null); 
   const [userEmail, setUserEmail] = useState("");
 
   const navigate = useNavigate();
 
-  // Handle email/password login
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -48,6 +46,8 @@ export default function LoginPage() {
         email,
         password,
       });
+
+      console.log(res)
 
       if (!res.data?.token) {
         toast.error("Something went wrong. Please try again later!");
@@ -93,7 +93,6 @@ export default function LoginPage() {
         <h2 className="text-[#3aabb7] text-4xl font-bold text-center mb-6">
           Login
         </h2>
-        {/* Email/Password Login Form */}
         <form onSubmit={handleLogin}>
           <label className="block text-[#3aabb7] text-lg font-bold mb-1">
             Email
@@ -132,7 +131,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Extra Options */}
         <div className="flex justify-between items-center mt-4">
           <button
             onClick={() => {

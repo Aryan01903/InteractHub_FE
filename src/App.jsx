@@ -4,10 +4,11 @@ import Home from "./components/HomeComponent/index";
 import 'react-toastify/dist/ReactToastify.css';
 import Whiteboard from "./components/Whiteboards/index";
 import WhiteboardPage from "./components/Whiteboards/WhiteboardPage";
-import VideoCall from "./components/VideoCall";
 import LoginPage from "./components/common/login/Login";
 import RegisterPage from "./components/common/Register";
 import AcceptInvitePage from "./components/common/AcceptInvite";
+import VideoConference from "./components/VideoConference";
+import VideoConferencePage from "./components/VideoConference/VideoConferencePage";
 
 function App(){
   return(
@@ -20,8 +21,9 @@ function App(){
         <Route path="/dashboard" element={<Dashboard />}/>
         <Route path="/whiteboard" element={<Whiteboard/>}/>
         <Route path="/whiteboard/:id" element={<WhiteboardPage/>}/>
-        <Route path="/video-call" element={<VideoCall/>}/>
-
+        <Route path="/video-conference" element={<VideoConference/>}/>
+        <Route path="/video-conference/:id" element={<VideoConferencePage/>}/>
+        
       </Routes>
 
     </div>

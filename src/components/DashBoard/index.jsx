@@ -6,119 +6,121 @@ import axiosInstance from "../api/axios";
 import { toast, ToastContainer } from "react-toastify";
 
 export default function Dashboard() {
-    const [role, setRole] = useState("");
-    const [email, setEmail] = useState("");
-    const [loader, setLoader] = useState(false);
+  const [role, setRole] = useState("");
+  const [email, setEmail] = useState("");
+  const [loader, setLoader] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // <-- Added for toggle
 
-    const name = localStorage.getItem("name");
-    const tenantName = localStorage.getItem("tenantName");
-    const userRole = localStorage.getItem("role")
+  const name = localStorage.getItem("name");
+  const tenantName = localStorage.getItem("tenantName");
+  const userRole = localStorage.getItem("role");
 
-    const handleInvitation = async (e) => {
-        e.preventDefault();
-        setLoader(true);
-        try {
-            const res = await axiosInstance.post("/auth/sendInvite", {
-                email,
-                role,
-            });
+  const handleInvitation = async (e) => {
+    e.preventDefault();
+    setLoader(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axiosInstance.post(
+        "/auth/invite",
+        { email, role },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-            if (res.status === 200) {
-                toast.success("Invitation sent!!!");
-            } else {
-                toast.error("Failed to send invitation.");
-            }
-        } catch (error) {
-            console.error("An Error Occurred", error);
-            toast.error("Something went wrong. Please try again!");
-        } finally {
-            setLoader(false);
-            cleanUp();
-        }
-    };
-
-    function cleanUp() {
-        setEmail("");
-        setRole("");
+      if (res.status === 200) {
+        toast.success("Invitation sent successfully!");
+      } else {
+        toast.error("Failed to send invitation.");
+      }
+    } catch (error) {
+      console.error("An Error Occurred", error);
+      toast.error("Something went wrong. Please try again!");
+    } finally {
+      setLoader(false);
+      cleanUp();
     }
+  };
 
-    return (
-        <div className="flex flex-col min-h-screen bg-gray-50">
-            {/* Header */}
-            <DashboardHeader />
+  function cleanUp() {
+    setEmail("");
+    setRole("");
+  }
 
-            <div className="flex flex-1">
-                {/* Sidebar */}
-                <DashboardSidebar />
+  return (
+    <div className="h-screen overflow-hidden">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
+        <DashboardHeader setSidebarOpen={setSidebarOpen} />
+      </header>
 
-                {/* Main Section */}
-                <section className="flex-1 p-6 overflow-auto">
-                    {/* Greeting */}
-                    <div className="text-[#333333] mb-6">
-                        <h1 className="text-3xl font-semibold">
-                            Hi, <span className="font-bold">{name}</span>
-                        </h1>
-                        <div className="mt-3">
-                            <h2 className="text-xl font-medium">
-                                Welcome To,
-                            </h2>
-                            <h2 className="text-3xl ml-2 font-extrabold">
-                                {tenantName}
-                            </h2>
-                        </div>
-                    </div>
+      {/* Sidebar and Content */}
+      <div className="pt-[70px] flex h-full">
+        {/* Sidebar */}
+        <DashboardSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
 
-                    {/* Members Table */}
-                    <div className="flex justify-center items-start mt-6">
-                        <MemberListingTable />
-                    </div>
-
-                    {/* Invite Section */}
-                    {userRole==="admin" && (
-                    <div className="mt-10 text-[#333333]">
-                        <h3 className="font-semibold text-2xl mb-4">
-                            Invite Joinees
-                        </h3>
-
-                        <form
-                            onSubmit={handleInvitation}
-                            className="flex flex-wrap items-center gap-4 bg-white p-6 rounded-xl shadow-md"
-                        >
-                            <input
-                                type="email"
-                                placeholder="Enter email to send invitation"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="flex-1 min-w-[250px] px-4 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#48c4D3] bg-gradient-to-r from-[#f5f5f5] to-[#f3f3f3]"
-                            />
-
-                            <select
-                                value={role}
-                                onChange={(e) => setRole(e.target.value)}
-                                className="w-44 px-4 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#48c4D3] bg-gradient-to-r from-[#f5f5f5] to-[#f3f3f3]"
-                            >
-                                <option value="" disabled>
-                                    Select role
-                                </option>
-                                <option value="admin">Admin</option>
-                                <option value="member">Member</option>
-                            </select>
-
-                            <button
-                                className="w-32 h-11 bg-gradient-to-r from-[#48c4D3] to-[#3aabb7] hover:from-[#3aabb7] hover:to-[#48c4D3] text-white rounded-full text-lg font-semibold shadow-md transition-all duration-200 flex items-center justify-center"
-                                type="submit"
-                                disabled={loader}
-                            >
-                                {loader ? "Please Wait..." : "Submit"}
-                            </button>
-                        </form>
-                    </div>
-                    )}
-                </section>
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+          <div className="max-w-6xl mx-auto text-[#333333]">
+            <div className="mb-10">
+              <h1 className="text-3xl font-bold">
+                Welcome back, <span className="text-[#48c4D3]">{name}</span>
+              </h1>
+              <p className="mt-2 text-gray-600 text-lg">
+                You’re currently managing the workspace for{" "}
+                <span className="font-semibold">{tenantName}</span>.
+              </p>
             </div>
 
-            {/* Toasts */}
-            <ToastContainer theme="dark" />
-        </div>
-    );
+            {/* Team Members */}
+            <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
+              <h2 className="text-2xl font-semibold mb-4">Team Members</h2>
+              <p className="text-gray-500 mb-6">
+                View and manage the members in your organization. Keep track of roles and access easily.
+              </p>
+              <div className="flex justify-center items-start">
+                <MemberListingTable />
+              </div>
+            </div>
+
+            {/* Invite Form */}
+            {userRole === "admin" && (
+              <div className="mt-10 bg-white p-6 rounded-2xl shadow-md border border-gray-100">
+                <h2 className="text-2xl font-semibold mb-3">Invite New Members</h2>
+                <p className="text-gray-500 mb-6">
+                  Send invitations to your team members and assign their roles right away.
+                </p>
+
+                <form onSubmit={handleInvitation} className="flex flex-wrap items-center gap-4">
+                  <input
+                    type="email"
+                    placeholder="Enter member's email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="flex-1 min-w-[250px] px-4 py-2 rounded-xl border border-gray-300 bg-gradient-to-r from-[#f5f5f5] to-[#f3f3f3] focus:outline-none focus:ring-2 focus:ring-[#48c4D3]"
+                  />
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="w-44 px-4 py-2 rounded-xl border border-gray-300 bg-gradient-to-r from-[#f5f5f5] to-[#f3f3f3] focus:outline-none focus:ring-2 focus:ring-[#48c4D3]"
+                  >
+                    <option value="" disabled>Select role</option>
+                    <option value="admin">Admin</option>
+                    <option value="member">Member</option>
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={loader}
+                    className="w-32 h-11 bg-gradient-to-r from-[#48c4D3] to-[#3aabb7] text-white rounded-full text-lg font-semibold shadow-md flex items-center justify-center transition-all duration-200 hover:from-[#3aabb7] hover:to-[#48c4D3]"
+                  >
+                    {loader ? "Sending..." : "Invite"}
+                  </button>
+                </form>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      <ToastContainer theme="dark" />
+    </div>
+  );
 }

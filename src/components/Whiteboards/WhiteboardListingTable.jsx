@@ -1,39 +1,10 @@
-import { useState, useEffect } from "react";
-import axiosInstance from "../api/axios";
-import { useNavigate } from "react-router-dom";
 import Loader from "../common/Loader";
 import { FaEye } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 
-export default function WhiteboardListingTable() {
-  const [loader, setLoader] = useState(false);
-  const [data, setData] = useState([]);
-  const [error, setError] = useState(null);
+export default function WhiteboardListingTable({ data, loading, error }) {
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchWhiteboards = async () => {
-      setLoader(true);
-      setError(null);
-
-      try {
-        const res = await axiosInstance.get("/whiteboard/get");
-
-        // Sort by updatedAt (most recent first)
-        const sorted = res.data.sort(
-          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
-        );
-
-        setData(sorted);
-      } catch (err) {
-        setError("Failed to fetch whiteboards. Please try again.");
-        console.error("Error fetching whiteboards:", err);
-      } finally {
-        setLoader(false);
-      }
-    };
-
-    fetchWhiteboards();
-  }, []);
 
   const handleUpdate = (id) => {
     navigate(`/whiteboard/${id}`);
@@ -43,11 +14,7 @@ export default function WhiteboardListingTable() {
     <div className="p-4">
       {error && <p className="text-red-500 mb-3">{error}</p>}
 
-      <h1 className="text-2xl font-semibold mb-4 text-center text-gray-700">
-        Whiteboard Listing
-      </h1>
-
-      {loader ? (
+      {loading ? (
         <div className="flex items-center justify-center min-h-[70vh]">
           <Loader />
         </div>
@@ -104,3 +71,21 @@ export default function WhiteboardListingTable() {
     </div>
   );
 }
+
+WhiteboardListingTable.propTypes = {
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      _id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      createdAt: PropTypes.string.isRequired,
+      updatedAt: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  loading: PropTypes.bool,
+  error: PropTypes.string,
+};
+
+WhiteboardListingTable.defaultProps = {
+  loading: false,
+  error: null,
+};
