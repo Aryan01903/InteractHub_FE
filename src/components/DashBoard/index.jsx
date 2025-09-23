@@ -1,7 +1,7 @@
 import DashboardSidebar from "../common/DashboardSidebar";
 import DashboardHeader from "../common/DashboardHeader";
 import MemberListingTable from "./memberListingTable";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axiosInstance from "../api/axios";
 import { toast, ToastContainer } from "react-toastify";
 
@@ -9,10 +9,10 @@ export default function Dashboard() {
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
   const [loader, setLoader] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false); // <-- Added for toggle
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState(null);
 
-  const name = localStorage.getItem("name");
-  const tenantName = localStorage.getItem("tenantName");
+
   const userRole = localStorage.getItem("role");
 
   const handleInvitation = async (e) => {
@@ -40,6 +40,33 @@ export default function Dashboard() {
     }
   };
 
+  const token = localStorage.getItem("token");
+  useEffect(() => {
+    if (!token) {
+      console.log("No token found!!!");
+      return;
+    }
+
+    const fetchUser = async () => {
+      try {
+        const response = await axiosInstance.get("/auth/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.success) {
+          setUser(response.data.user);
+        }
+      } catch (err) {
+        console.error("Failed to fetch data", err);
+      }
+    };
+
+    fetchUser();
+  }, [token]);
+
+
   function cleanUp() {
     setEmail("");
     setRole("");
@@ -60,17 +87,20 @@ export default function Dashboard() {
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
           <div className="max-w-6xl mx-auto text-[#333333]">
+            {user ? (
             <div className="mb-10">
               <h1 className="text-3xl font-bold">
-                Welcome back, <span className="text-[#48c4D3]">{name}</span>
+                Welcome back, <span className="text-[#48c4D3]">{user?.name}</span>
               </h1>
               <p className="mt-2 text-gray-600 text-lg">
                 You’re currently managing the workspace for{" "}
-                <span className="font-semibold">{tenantName}</span>.
+                <span className="font-semibold">{user?.tenantName}</span>.
               </p>
             </div>
-
-            {/* Team Members */}
+            ) : (
+              <p className="text-3xl">Loading user data...</p>
+            )}
+           {/* Team Members */}
             <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
               <h2 className="text-2xl font-semibold mb-4">Team Members</h2>
               <p className="text-gray-500 mb-6">

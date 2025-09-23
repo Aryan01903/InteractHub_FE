@@ -45,8 +45,6 @@ function OTP({ onClose, email, tenantName, tenantId, type }) {
       if (type === "login" || type === "register") {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("role", res.data.role);
-        localStorage.setItem("name", res.data.name);
-        localStorage.setItem("tenantName", res.data.tenantName);
         localStorage.setItem("tenantId", res.data.tenantId);
         toast.success("User Verification Successful!");
         navigate("/dashboard");

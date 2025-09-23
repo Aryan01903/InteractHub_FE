@@ -22,7 +22,7 @@ function App(){
         <Route path="/whiteboard" element={<Whiteboard/>}/>
         <Route path="/whiteboard/:id" element={<WhiteboardPage/>}/>
         <Route path="/video-conference" element={<VideoConference/>}/>
-        <Route path="/video-conference/:id" element={<VideoConferencePage/>}/>
+        <Route path="/video-conference/:roomId" element={<VideoConferencePage/>}/>
         
       </Routes>
 
