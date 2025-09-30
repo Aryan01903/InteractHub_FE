@@ -12,7 +12,7 @@ import {
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 import PropTypes from 'prop-types';
 
-const socket = io("https://boardstack.onrender.com", {
+const socket = io(`${import.meta.env.VITE_BACKEND_URL}`, {
   withCredentials: true,
   transports: ["websocket"],
 });

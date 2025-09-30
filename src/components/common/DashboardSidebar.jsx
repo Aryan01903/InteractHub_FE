@@ -2,9 +2,9 @@ import {
   IoHomeOutline,
   IoCreateOutline,
   IoVideocamOutline,
-  IoInformationCircleOutline,
   IoMenuOutline,
 } from "react-icons/io5";
+import { PiUsersThree } from "react-icons/pi";
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +22,6 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <button
           onClick={toggleSidebar}
@@ -31,7 +30,6 @@ export default function DashboardSidebar() {
           <IoMenuOutline className="text-2xl" />
         </button>
       </div>
-
       {/* Sidebar */}
       <div
         className={`lg:w-64 w-64 h-screen bg-white shadow-lg border-r-2 border-[#e2e2e2] 
@@ -59,8 +57,9 @@ export default function DashboardSidebar() {
               onClick={() => handleNavigate("/video-conference")}
             />
             <SidebarLink
-              icon={<IoInformationCircleOutline />}
-              label="About InteractHub"
+              icon={<PiUsersThree/>}
+              label="Chat With Others"
+              onClick={() => handleNavigate("/chat")}
             />
           </div>
         </div>

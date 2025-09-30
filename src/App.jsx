@@ -1,14 +1,15 @@
-import Dashboard from "./components/DashBoard/index";
+import Dashboard from "./components/DashBoardPage/index";
 import {Routes, Route} from "react-router-dom"
-import Home from "./components/HomeComponent/index";
+import Home from "./components/HomePage/index";
 import 'react-toastify/dist/ReactToastify.css';
-import Whiteboard from "./components/Whiteboards/index";
-import WhiteboardPage from "./components/Whiteboards/WhiteboardPage";
+import Whiteboard from "./components/WhiteboardPage/index";
+import WhiteboardPage from "./components/WhiteboardPage/WhiteboardPage";
 import LoginPage from "./components/common/login/Login";
 import RegisterPage from "./components/common/Register";
 import AcceptInvitePage from "./components/common/AcceptInvite";
-import VideoConference from "./components/VideoConference";
-import VideoConferencePage from "./components/VideoConference/VideoConferencePage";
+import VideoConference from "./components/VideoConferencePage";
+import VideoConferencePage from "./components/VideoConferencePage/VideoConferencePage";
+import ChatWithOthers from "./components/ChatWithOthersPage";
 
 function App(){
   return(
@@ -23,6 +24,7 @@ function App(){
         <Route path="/whiteboard/:id" element={<WhiteboardPage/>}/>
         <Route path="/video-conference" element={<VideoConference/>}/>
         <Route path="/video-conference/:roomId" element={<VideoConferencePage/>}/>
+        <Route path="/chat" element={<ChatWithOthers/>}/> 
         
       </Routes>
 

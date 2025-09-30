@@ -10,16 +10,23 @@ import { useNavigate } from "react-router-dom";
 
 function Home() {
   const navigate = useNavigate();
+
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       navigate("/dashboard");
       return;
     }
-  })
+  }, [navigate]);
+
   useEffect(() => {
     const typed = new Typed('#typed-element', {
-      strings: ['Multi Tenant Support','Role Based Access', 'Real Time Whiteboard Collaboration', 'Web Based Video Conferencing'],
+      strings: ['Multi Tenant Support', 'Role Based Access', 'Real Time Whiteboard Collaboration', 'Web Based Video Conferencing'],
       typeSpeed: 50,
       backSpeed: 30,
       backDelay: 1000,
@@ -50,7 +57,6 @@ function Home() {
             <Link to="About" smooth={true} duration={500} className="cursor-pointer hover:text-xl hover:text-gray-500">About</Link>
             <Link to="features" smooth={true} duration={500} className="cursor-pointer hover:text-xl hover:text-gray-500">Features</Link>
             <Link to="contact" smooth={true} duration={500} className="cursor-pointer hover:text-xl hover:text-gray-500">Contact Me</Link>
-
           </div>
 
           <div className="hidden sm:flex items-center space-x-4">
@@ -60,7 +66,10 @@ function Home() {
             >
               Login
             </button>
-            <button className="bg-[#48C4D3] w-24 h-10 rounded-full text-white font-medium hover:bg-[#3aabb7] transition-colors" onClick={()=>navigate("/register")}>
+            <button
+              className="bg-[#48C4D3] w-24 h-10 rounded-full text-white font-medium hover:bg-[#3aabb7] transition-colors"
+              onClick={() => navigate("/register")}
+            >
               Register
             </button>
           </div>
@@ -73,10 +82,16 @@ function Home() {
             <Link to="About" smooth={true} duration={500} onClick={toggleMenu}>About</Link>
             <Link to="features" smooth={true} duration={500} onClick={toggleMenu}>Features</Link>
             <Link to="contact" smooth={true} duration={500} onClick={toggleMenu}>Contact Me</Link>
-            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]" onClick={() => { toggleMenu(); navigate("/login") }}>
+            <button
+              className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]"
+              onClick={() => { toggleMenu(); navigate("/login"); }}
+            >
               Login
             </button>
-            <button className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]" onClick={()=> {toggleMenu(); navigate("/register")}}>
+            <button
+              className="bg-[#48C4D3] w-24 h-10 rounded-full hover:bg-[#3aabb7]"
+              onClick={() => { toggleMenu(); navigate("/register"); }}
+            >
               Register
             </button>
           </div>
@@ -97,7 +112,7 @@ function Home() {
       <div id="features" className="m-14"><Features /></div>
       <div id="contact">
         <Footer />
-      </div>     
+      </div>
 
       <ToastContainer />
     </div>
