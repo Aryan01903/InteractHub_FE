@@ -29,39 +29,62 @@ function PreviewFile({ file, onRemove }) {
   }, [file]);
 
   return (
-    <div className="flex items-center gap-2 border rounded p-2 bg-gray-100 mb-2 w-full max-w-xs">
+    <div className="flex items-center gap-2 mb-2 w-full max-w-[200px] sm:max-w-[300px]">
       {file.type?.startsWith("image/") && preview ? (
-        <img
-          src={preview}
-          alt={file.name}
-          className="h-10 w-10 object-cover rounded"
-          loading="lazy"
-        />
+        <div className="relative">
+          <img
+            src={preview}
+            alt={file.name}
+            className="h-16 w-16 sm:h-20 sm:w-20 object-cover rounded"
+            loading="lazy"
+          />
+          <button
+            type="button"
+            className="absolute top-0 right-0 text-red-500 hover:text-red-700 text-sm bg-white rounded-full p-1"
+            onClick={onRemove}
+            aria-label={`Remove ${file.name}`}
+          >
+            ✕
+          </button>
+        </div>
+      ) : file.type === "application/pdf" ? (
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{getFileIcon(file.type)}</span>
+          <a
+            href={URL.createObjectURL(file)}
+            download={file.name}
+            className="text-blue-500 hover:underline truncate max-w-[120px] sm:max-w-[150px]"
+            aria-label={`Download ${file.name}`}
+            target="_main"
+          >
+            {file.name}
+          </a>
+          <button
+            type="button"
+            className="text-red-500 hover:text-red-700 text-sm"
+            onClick={onRemove}
+            aria-label={`Remove ${file.name}`}
+          >
+            ✕
+          </button>
+        </div>
       ) : (
-        <span className="text-2xl mr-1">{getFileIcon(file.type)}</span>
+        <div className="flex items-center gap-2 border rounded p-2 bg-gray-100">
+          <span className="text-2xl mr-1">{getFileIcon(file.type)}</span>
+          {file.type?.startsWith("audio/") && (
+            <audio controls src={URL.createObjectURL(file)} className="h-8" />
+          )}
+          <div className="truncate flex-1">{file.name}</div>
+          <button
+            type="button"
+            className="text-red-500 hover:text-red-700 text-sm"
+            onClick={onRemove}
+            aria-label={`Remove ${file.name}`}
+          >
+            ✕
+          </button>
+        </div>
       )}
-      {file.type?.startsWith("audio/") && (
-        <audio controls src={URL.createObjectURL(file)} className="h-8" />
-      )}
-      {file.type === "application/pdf" && (
-        <a
-          href={URL.createObjectURL(file)}
-          download={file.name}
-          className="text-blue-500 hover:underline"
-          aria-label={`Download ${file.name}`}
-        >
-          {file.name}
-        </a>
-      )}
-      <div className="truncate flex-1">{file.name}</div>
-      <button
-        type="button"
-        className="ml-auto text-red-500 hover:text-red-700 text-lg"
-        onClick={onRemove}
-        aria-label={`Remove ${file.name}`}
-      >
-        ✕
-      </button>
     </div>
   );
 }
@@ -207,66 +230,90 @@ function Message({ msg, currentUser, setSelectedMessage, sidesheetOpen }) {
       msg.files.forEach((file) => {
         if (file.mimetype?.startsWith("image/")) {
           const img = new Image();
-          img.src = `${import.meta.env.VITE_SOCKET_URL}/Uploads/${file.filename}`;
+          img.src = `${import.meta.env.VITE_SOCKET_URL}/uploads/${file.filename}`;
           img.onload = () => {
             setImagePreviews((prev) => ({
               ...prev,
               [file.filename]: img.src,
             }));
           };
+          img.onerror = () => console.error(`Failed to load image: ${file.filename}`);
         }
       });
     }
   }, [msg.files]);
 
   return (
-    <div className={`message-container ${isCurrentUser ? "ml-auto" : "mr-auto"}`}>
-      <div
-        className={`p-4 rounded-lg relative ${isCurrentUser ? "bg-blue-200 text-right" : "bg-yellow-100 text-left"}`}
-      >
-        <div className="text-xs mb-1 font-semibold">
-          {isCurrentUser ? "You" : msg.sender?.name || "Unknown"}
-        </div>
-        <div>{msg.content || (msg.files?.length > 0 ? "" : "File")}</div>
-        {msg.files?.length > 0 && (
+    <div className={`message-container ${isCurrentUser ? "ml-auto" : "mr-auto"}`} data-message-id={msg._id}>
+      <div className="relative">
+        {msg.files?.length > 0 ? (
           <div className="mt-2 space-y-2">
             {msg.files.map((file, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 {file.mimetype?.startsWith("image/") && imagePreviews[file.filename] ? (
                   <a
-                    href={`${import.meta.env.VITE_SOCKET_URL}/Uploads/${file.filename}`}
+                    href={`${import.meta.env.VITE_SOCKET_URL}/uploads/${file.filename}`}
                     download={file.filename}
                     className="relative inline-block"
                     aria-label={`Download ${file.filename}`}
+                    target="_main"
                   >
                     <img
                       src={imagePreviews[file.filename]}
                       alt={file.filename}
-                      className="h-20 w-20 object-cover rounded"
+                      className="h-32 w-32 sm:h-48 sm:w-48 object-cover rounded"
                       loading="lazy"
                     />
                   </a>
-                ) : file.mimetype?.startsWith("audio/") || file.mimetype === "application/pdf" ? (
-                  <a
-                    href={`${import.meta.env.VITE_SOCKET_URL}/Uploads/${file.filename}`}
-                    download={file.filename}
-                    className="text-blue-500 hover:underline flex items-center gap-2"
-                    aria-label={`Download ${file.filename}`}
+                ) : file.mimetype?.startsWith("audio/") ? (
+                  <div className={`p-3 rounded-lg ${isCurrentUser ? "bg-blue-200" : "bg-yellow-100"}`}>
+                    <audio
+                      controls
+                      src={`${import.meta.env.VITE_SOCKET_URL}/uploads/${file.filename}`}
+                      className="h-8"
+                    />
+                    <div className="text-xs text-gray-600 mt-1 truncate">{file.filename}</div>
+                  </div>
+                ) : file.mimetype === "application/pdf" ? (
+                  <div
+                    className={`p-3 rounded-lg border ${
+                      isCurrentUser ? "bg-blue-200 border-blue-300" : "bg-yellow-100 border-yellow-300"
+                    } flex items-center gap-2 w-full max-w-[250px]`}
                   >
-                    <span>{getFileIcon(file.mimetype)}</span>
-                    {file.filename}
-                  </a>
+                    <span className="text-2xl flex-shrink-0">{getFileIcon(file.mimetype)}</span>
+                    <div className="flex-1 min-w-0">
+                      <a
+                        href={`${import.meta.env.VITE_SOCKET_URL}/uploads/${file.filename}`}
+                        download={file.filename}
+                        className="text-blue-500 hover:underline block truncate text-sm"
+                        aria-label={`Download ${file.filename}`}
+                        target="_main"
+                      >
+                        {file.filename}
+                      </a>
+                    </div>
+                  </div>
                 ) : (
-                  <span>{getFileIcon(file.mimetype)}</span>
+                  <span className="text-2xl">{getFileIcon(file.mimetype)}</span>
                 )}
               </div>
             ))}
           </div>
+        ) : null}
+        {msg.content && (
+          <div
+            className={`p-3 rounded-lg ${isCurrentUser ? "bg-blue-200 text-right" : "bg-yellow-100 text-left"}`}
+          >
+            <div className="text-xs mb-1 font-semibold">
+              {isCurrentUser ? "You" : msg.sender?.name || "Unknown"}
+            </div>
+            <div>{msg.content}</div>
+            <div className="text-xs text-gray-500 flex justify-between mt-1">
+              <span>{timestamp}</span>
+              <span>{msg.readBy?.some((r) => r._id === currentUser._id) ? "✓ Read" : "Unread"}</span>
+            </div>
+          </div>
         )}
-        <div className="text-xs text-gray-500 flex justify-between mt-1">
-          <span>{timestamp}</span>
-          <span>{msg.readBy?.some((r) => r._id === currentUser._id) ? "✓ Read" : "Unread"}</span>
-        </div>
         {isCurrentUser && !sidesheetOpen && (
           <button
             className="absolute top-2 right-2 cursor-pointer text-blue-800 hover:text-blue-900 z-10"
@@ -313,7 +360,7 @@ function MessageInput({ state, dispatch, handleSend, handleFileSelect, handleKey
         <input
           type="text"
           placeholder="Type a message..."
-          className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
           value={state.newMessage}
           onChange={(e) => {
             dispatch({ type: "SET_NEW_MESSAGE", payload: e.target.value });
@@ -343,7 +390,7 @@ function MessageInput({ state, dispatch, handleSend, handleFileSelect, handleKey
         <button
           onClick={handleSend}
           disabled={state.status.isSending || state.status.isUpdating || state.status.isDeleting || (!state.newMessage.trim() && !state.selectedFiles.length)}
-          className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-blue-700"
+          className="bg-[#3aabb7] text-white px-3 sm:px-4 py-2 rounded disabled:opacity-50 hover:bg-[#2d8790] text-sm sm:text-base"
           title={state.status.isSending || state.status.isUpdating ? "Sending..." : state.editingMessageId ? "Update" : "Send"}
           aria-label={state.editingMessageId ? "Update message" : "Send message"}
         >
@@ -391,9 +438,9 @@ function MembersPanel({ members, currentUser, sidesheetOpen, setSidesheetOpen })
         <ul className="space-y-2">
           {sortedMembers.map((member) => (
             <li key={member._id} className="p-2 hover:bg-gray-100 rounded">
-              <div className="font-semibold">{member.name || "Unknown"}</div>
+              <div className="font-semibold text-sm sm:text-base">{member.name || "Unknown"}</div>
               {currentUser.role === "admin" && member.email && (
-                <div className="text-sm text-gray-600">{member.email}</div>
+                <div className="text-xs text-gray-600">{member.email}</div>
               )}
               <div className="text-xs text-gray-500">{member._id === currentUser._id ? "You" : member.role === "admin" ? "Admin" : "Member"}</div>
             </li>
@@ -422,7 +469,7 @@ function MessageOptionsModal({ state, dispatch, handleOptionSelect, getReadByNam
             <div className="space-y-2">
               <button
                 onClick={() => handleOptionSelect("edit")}
-                className="w-full bg-blue-500 text-white py-2 rounded disabled:opacity-50 hover:bg-blue-600"
+                className="w-full bg-[#3aabb7] text-white py-2 rounded disabled:opacity-50 hover:bg-[#2d8790] text-sm sm:text-base"
                 disabled={state.status.isSending || state.status.isUpdating || state.status.isDeleting}
                 aria-label="Edit message"
               >
@@ -430,7 +477,7 @@ function MessageOptionsModal({ state, dispatch, handleOptionSelect, getReadByNam
               </button>
               <button
                 onClick={() => handleOptionSelect("delete")}
-                className="w-full bg-red-500 text-white py-2 rounded disabled:opacity-50 hover:bg-red-600"
+                className="w-full bg-red-500 text-white py-2 rounded disabled:opacity-50 hover:bg-red-600 text-sm sm:text-base"
                 disabled={state.status.isSending || state.status.isUpdating || state.status.isDeleting}
                 aria-label="Delete message"
               >
@@ -443,16 +490,16 @@ function MessageOptionsModal({ state, dispatch, handleOptionSelect, getReadByNam
             <ul className="list-disc pl-5">
               {getReadByNames(state.selectedMessage.readBy).length > 0 ? (
                 getReadByNames(state.selectedMessage.readBy).map((reader) => (
-                  <li key={reader._id}>{reader.name}</li>
+                  <li key={reader._id} className="text-sm">{reader.name}</li>
                 ))
               ) : (
-                <li key="no-readers">No one has read this message yet</li>
+                <li className="text-sm">No one has read this message yet</li>
               )}
             </ul>
           </div>
           <button
             onClick={() => dispatch({ type: "SET_MODAL", payload: false })}
-            className="w-full bg-gray-300 py-2 rounded hover:bg-gray-400"
+            className="w-full bg-gray-300 py-2 rounded hover:bg-gray-400 text-sm sm:text-base"
             aria-label="Cancel"
           >
             Cancel
@@ -486,6 +533,22 @@ function ChatWithOthers() {
   const token = localStorage.getItem("token") || "";
   const allowedFileTypes = ["image/jpeg", "image/jpg", "image/png", "audio/mpeg", "application/pdf"];
   const maxFileSize = 10 * 1024 * 1024; // 10MB
+
+  const fetchMessages = useCallback(async () => {
+    if (!state.currentUser._id) return;
+    try {
+      const res = await axiosInstance.get("/messages", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      dispatch({ type: "SET_MESSAGES", payload: Array.isArray(res.data) ? res.data : [] });
+    } catch (err) {
+      console.error("Error fetching messages:", err.response?.data || err.message);
+      dispatch({
+        type: "SET_ERROR",
+        payload: err.response?.status === 404 ? "No messages found." : "Failed to load messages.",
+      });
+    }
+  }, [token, state.currentUser._id]);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -595,23 +658,8 @@ function ChatWithOthers() {
   }, [token, state.currentUser._id]);
 
   useEffect(() => {
-    const fetchMessages = async () => {
-      if (!state.currentUser._id) return;
-      try {
-        const res = await axiosInstance.get("/messages", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        dispatch({ type: "SET_MESSAGES", payload: Array.isArray(res.data) ? res.data : [] });
-      } catch (err) {
-        console.error("Error fetching messages:", err.response?.data || err.message);
-        dispatch({
-          type: "SET_ERROR",
-          payload: err.response?.status === 404 ? "No messages found." : "Failed to load messages.",
-        });
-      }
-    };
     fetchMessages();
-  }, [token, state.currentUser._id]);
+  }, [fetchMessages]);
 
   useEffect(() => {
     if (!state.currentUser._id || !state.messages.length) return;
@@ -707,6 +755,7 @@ function ChatWithOthers() {
       }
       dispatch({ type: "SET_NEW_MESSAGE", payload: "" });
       dispatch({ type: "SET_SELECTED_FILES", payload: [] });
+      await fetchMessages();
     } catch (err) {
       console.error("Send failed:", err.response?.data || err.message);
       dispatch({
@@ -722,7 +771,7 @@ function ChatWithOthers() {
       isSendingRef.current = false;
       dispatch({ type: "SET_STATUS", payload: { isSending: false, isUpdating: false } });
     }
-  }, [state.newMessage, state.selectedFiles, state.editingMessageId, token]);
+  }, [state.newMessage, state.selectedFiles, state.editingMessageId, token, fetchMessages]);
 
   const handleDelete = async (id) => {
     dispatch({ type: "SET_STATUS", payload: { isDeleting: true } });
@@ -730,6 +779,7 @@ function ChatWithOthers() {
     try {
       await axiosInstance.delete(`/messages/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       socketRef.current.emit("deleteMessage", { messageId: id });
+      await fetchMessages();
     } catch (err) {
       console.error("Delete failed:", err.response?.data || err.message);
       dispatch({
@@ -805,10 +855,16 @@ function ChatWithOthers() {
       <style>
         {`
           :root {
-            --header-height: 70px;
-            --tenant-header-height: 72px; /* Height of tenant name and members button (4rem padding + content) */
-            --error-message-height: ${state.errorMessage ? "48px" : "0px"}; /* Height of error message (2rem padding + content) */
-            --message-input-height: 80px; /* Approximate height of message input (adjust as needed) */
+            --header-height: 64px;
+            --tenant-header-height: 64px;
+            --error-message-height: ${state.errorMessage ? "48px" : "0px"};
+            --message-input-height: 80px;
+          }
+
+          html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
           }
 
           header {
@@ -817,21 +873,35 @@ function ChatWithOthers() {
             left: 0;
             right: 0;
             height: var(--header-height);
-            z-index: 50;
+            z-index: 1000;
             background: white;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           }
 
-          main {
-            padding-top: var(--header-height);
+          .sidebar {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
             height: calc(100vh - var(--header-height));
-            overflow: hidden; /* Prevent main from scrolling */
+            z-index: 1010;
+            transition: transform 0.3s ease-in-out;
+          }
+
+          main {
+            margin-top: var(--header-height);
+            height: calc(100vh - var(--header-height));
+            overflow: hidden;
+            margin-left: 0;
+            transition: margin-left 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
           }
 
           .chat-container {
             display: flex;
             flex-direction: column;
             height: 100%;
+            flex: 1;
           }
 
           .tenant-header {
@@ -867,7 +937,7 @@ function ChatWithOthers() {
           }
 
           .message-list::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
           }
 
           .message-list::-webkit-scrollbar-track {
@@ -888,30 +958,24 @@ function ChatWithOthers() {
             scrollbar-color: #888 #f1f1f1;
           }
 
-          .message-card {
-            background: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 1rem;
-            margin-bottom: 1rem;
-          }
-
           .message-container {
-            max-width: 90%;
-            margin-left: auto;
-            margin-right: auto;
+            max-width: 80%;
             margin-bottom: 1rem;
           }
 
           @media (min-width: 640px) {
             .message-container {
-              max-width: 70%;
+              max-width: 60%;
+            }
+          }
+
+          @media (min-width: 1024px) {
+            .message-container {
+              max-width: 50%;
             }
           }
 
           .message-container > div {
-            padding: 1rem;
-            border-radius: 0.5rem;
             position: relative;
           }
 
@@ -954,7 +1018,7 @@ function ChatWithOthers() {
             align-items: center;
             justify-content: center;
             background: rgba(0, 0, 0, 0.4);
-            z-index: 50;
+            z-index: 1050;
           }
 
           .modal-content {
@@ -965,6 +1029,12 @@ function ChatWithOthers() {
             max-height: 80vh;
             overflow-y: auto;
           }
+
+          @media (min-width: 640px) {
+            .modal-content {
+              max-width: 400px;
+            }
+          }
         `}
       </style>
 
@@ -973,16 +1043,16 @@ function ChatWithOthers() {
           <DashboardHeader setSidebarOpen={setSidebarOpen} />
         </header>
 
-        <div className="flex-1 flex h-full">
-          <DashboardSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+        <div className="flex flex-1">
+          <DashboardSidebar open={sidebarOpen} setOpen={setSidebarOpen} className="sidebar" />
 
-          <main className={`flex-1 bg-gray-50 main-content ${sidebarOpen ? "sidebar-open" : ""}`}>
+          <main className={`flex-1 bg-gray-50 main-content ${sidebarOpen ? "lg:ml-64" : ""}`}>
             <div className="chat-container">
               <div className="tenant-header">
-                <h2 className="text-xl font-bold text-gray-800">{state.currentUser.tenantName || "Default Tenant"}</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-800">{state.currentUser.tenantName || "Default Tenant"}</h2>
                 <button
                   onClick={() => setSidesheetOpen(!sidesheetOpen)}
-                  className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700"
+                  className="bg-[#3aabb7] text-white p-2 rounded-full hover:bg-[#2d8790]"
                   title="Toggle members panel"
                   aria-label="Toggle members panel"
                 >
@@ -992,10 +1062,10 @@ function ChatWithOthers() {
 
               {state.errorMessage && (
                 <div className="error-message">
-                  <span>{state.errorMessage}</span>
+                  <span className="text-sm">{state.errorMessage}</span>
                   <button
                     onClick={() => dispatch({ type: "SET_ERROR", payload: "" })}
-                    className="ml-2 text-red-900 hover:underline"
+                    className="ml-2 text-red-900 hover:underline text-sm"
                     aria-label="Dismiss error"
                   >
                     Dismiss
@@ -1009,26 +1079,24 @@ function ChatWithOthers() {
                 </div>
               ) : (
                 <div className="message-list">
-                  <div className="message-card">
-                    {state.isTyping.size > 0 && (
-                      <div className="text-sm text-gray-500 italic bg-gray-100 p-2 rounded">
-                        {Array.from(state.isTyping)
-                          .map((entry) => entry.split(":")[1])
-                          .join(", ")}{" "}
-                        {state.isTyping.size > 1 ? "are" : "is"} typing...
-                      </div>
-                    )}
-                    {state.messages.map((msg) => (
-                      <Message
-                        key={msg._id}
-                        msg={msg}
-                        currentUser={state.currentUser}
-                        setSelectedMessage={(msg) => dispatch({ type: "SET_SELECTED_MESSAGE", payload: msg })}
-                        sidesheetOpen={sidesheetOpen}
-                      />
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
+                  {state.isTyping.size > 0 && (
+                    <div className="text-sm text-gray-500 italic bg-gray-100 p-2 rounded mb-2">
+                      {Array.from(state.isTyping)
+                        .map((entry) => entry.split(":")[1])
+                        .join(", ")}{" "}
+                      {state.isTyping.size > 1 ? "are" : "is"} typing...
+                    </div>
+                  )}
+                  {state.messages.map((msg) => (
+                    <Message
+                      key={msg._id}
+                      msg={msg}
+                      currentUser={state.currentUser}
+                      setSelectedMessage={(msg) => dispatch({ type: "SET_SELECTED_MESSAGE", payload: msg })}
+                      sidesheetOpen={sidesheetOpen}
+                    />
+                  ))}
+                  <div ref={messagesEndRef} />
                 </div>
               )}
 
