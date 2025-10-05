@@ -55,7 +55,7 @@ function PreviewFile({ file, onRemove }) {
             download={file.name}
             className="text-blue-500 hover:underline truncate max-w-[120px] sm:max-w-[150px]"
             aria-label={`Download ${file.name}`}
-            target="_main"
+            target="_blank"
           >
             {file.name}
           </a>
@@ -112,6 +112,7 @@ const initialState = {
   unreadCount: 0,
   errorMessage: "",
   isTyping: new Set(),
+  uploadProgress: 0,
 };
 
 function reducer(state, action) {
@@ -211,6 +212,9 @@ function reducer(state, action) {
     case "SET_UNREAD_COUNT": {
       return { ...state, unreadCount: action.payload };
     }
+    case "SET_UPLOAD_PROGRESS": {
+      return { ...state, uploadProgress: action.payload };
+    }
     default: {
       return state;
     }
@@ -230,14 +234,14 @@ function Message({ msg, currentUser, setSelectedMessage, sidesheetOpen }) {
       msg.files.forEach((file) => {
         if (file.mimetype?.startsWith("image/")) {
           const img = new Image();
-          img.src = `${import.meta.env.VITE_SOCKET_URL}/uploads/${file.filename}`;
+          img.src = file.secure_url;
           img.onload = () => {
             setImagePreviews((prev) => ({
               ...prev,
-              [file.filename]: img.src,
+              [file.public_id]: img.src,
             }));
           };
-          img.onerror = () => console.error(`Failed to load image: ${file.filename}`);
+          img.onerror = () => console.error(`Failed to load image: ${file.public_id}`);
         }
       });
     }
@@ -250,17 +254,17 @@ function Message({ msg, currentUser, setSelectedMessage, sidesheetOpen }) {
           <div className="mt-2 space-y-2">
             {msg.files.map((file, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                {file.mimetype?.startsWith("image/") && imagePreviews[file.filename] ? (
+                {file.mimetype?.startsWith("image/") && imagePreviews[file.public_id] ? (
                   <a
-                    href={`${import.meta.env.VITE_SOCKET_URL}/uploads/${file.filename}`}
-                    download={file.filename}
+                    href={file.secure_url}
+                    download={file.original_filename}
                     className="relative inline-block"
-                    aria-label={`Download ${file.filename}`}
-                    target="_main"
+                    aria-label={`Download ${file.original_filename}`}
+                    target="_blank"
                   >
                     <img
-                      src={imagePreviews[file.filename]}
-                      alt={file.filename}
+                      src={imagePreviews[file.public_id]}
+                      alt={file.original_filename}
                       className="h-32 w-32 sm:h-48 sm:w-48 object-cover rounded"
                       loading="lazy"
                     />
@@ -269,10 +273,10 @@ function Message({ msg, currentUser, setSelectedMessage, sidesheetOpen }) {
                   <div className={`p-3 rounded-lg ${isCurrentUser ? "bg-blue-200" : "bg-yellow-100"}`}>
                     <audio
                       controls
-                      src={`${import.meta.env.VITE_SOCKET_URL}/uploads/${file.filename}`}
+                      src={file.secure_url}
                       className="h-8"
                     />
-                    <div className="text-xs text-gray-600 mt-1 truncate">{file.filename}</div>
+                    <div className="text-xs text-gray-600 mt-1 truncate">{file.original_filename}</div>
                   </div>
                 ) : file.mimetype === "application/pdf" ? (
                   <div
@@ -283,13 +287,13 @@ function Message({ msg, currentUser, setSelectedMessage, sidesheetOpen }) {
                     <span className="text-2xl flex-shrink-0">{getFileIcon(file.mimetype)}</span>
                     <div className="flex-1 min-w-0">
                       <a
-                        href={`${import.meta.env.VITE_SOCKET_URL}/uploads/${file.filename}`}
-                        download={file.filename}
+                        href={file.secure_url}
+                        download={file.original_filename}
                         className="text-blue-500 hover:underline block truncate text-sm"
-                        aria-label={`Download ${file.filename}`}
-                        target="_main"
+                        aria-label={`Download ${file.original_filename}`}
+                        target="_blank"
                       >
-                        {file.filename}
+                        {file.original_filename}
                       </a>
                     </div>
                   </div>
@@ -335,7 +339,32 @@ Message.propTypes = {
   sidesheetOpen: PropTypes.bool.isRequired,
 };
 
-function MessageInput({ state, dispatch, handleSend, handleFileSelect, handleKeyPress, handleDrop, handleDragOver, handleDragEnter, handleDragLeave, dropAreaRef, handleTyping }) {
+function MessageInput({
+  state,
+  dispatch,
+  handleSend,
+  handleKeyPress,
+  handleDrop,
+  handleDragOver,
+  handleDragEnter,
+  handleDragLeave,
+  dropAreaRef,
+  handleTyping,
+}) {
+  const handleFileSelectWithProgress = (e) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter(
+      (file) =>
+        ["image/jpeg", "image/jpg", "image/png", "audio/mpeg", "application/pdf"].includes(file.type) &&
+        file.size <= 10 * 1024 * 1024
+    );
+    if (validFiles.length !== files.length) {
+      dispatch({ type: "SET_ERROR", payload: "Some files were rejected (unsupported type or too large)." });
+    }
+    dispatch({ type: "SET_SELECTED_FILES", payload: [...state.selectedFiles, ...validFiles] });
+    e.target.value = "";
+  };
+
   return (
     <div
       className="message-input-container"
@@ -351,9 +380,22 @@ function MessageInput({ state, dispatch, handleSend, handleFileSelect, handleKey
             <PreviewFile
               key={idx}
               file={file}
-              onRemove={() => dispatch({ type: "SET_SELECTED_FILES", payload: state.selectedFiles.filter((_, i) => i !== idx) })}
+              onRemove={() =>
+                dispatch({
+                  type: "SET_SELECTED_FILES",
+                  payload: state.selectedFiles.filter((_, i) => i !== idx),
+                })
+              }
             />
           ))}
+          {state.status.isSending && (
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full"
+                style={{ width: `${state.uploadProgress}%` }}
+              ></div>
+            </div>
+          )}
         </div>
       )}
       <div className="flex gap-2">
@@ -376,7 +418,7 @@ function MessageInput({ state, dispatch, handleSend, handleFileSelect, handleKey
           id="fileInput"
           multiple
           accept={["image/jpeg", "image/jpg", "image/png", "audio/mpeg", "application/pdf"].join(",")}
-          onChange={handleFileSelect}
+          onChange={handleFileSelectWithProgress}
         />
         <button
           onClick={() => document.getElementById("fileInput").click()}
@@ -405,7 +447,6 @@ MessageInput.propTypes = {
   state: PropTypes.object.isRequired,
   dispatch: PropTypes.func.isRequired,
   handleSend: PropTypes.func.isRequired,
-  handleFileSelect: PropTypes.func.isRequired,
   handleKeyPress: PropTypes.func.isRequired,
   handleDrop: PropTypes.func.isRequired,
   handleDragOver: PropTypes.func.isRequired,
@@ -534,14 +575,23 @@ function ChatWithOthers() {
   const allowedFileTypes = ["image/jpeg", "image/jpg", "image/png", "audio/mpeg", "application/pdf"];
   const maxFileSize = 10 * 1024 * 1024; // 10MB
 
-  const fetchMessages = useCallback(async () => {
+  const [headerHeight, setHeaderHeight] = useState(
+    window.innerWidth >= 768 ? 90 : 64
+  );
+
+  const fetchMessages = useCallback(async (attempt = 1) => {
     if (!state.currentUser._id) return;
     try {
       const res = await axiosInstance.get("/messages", {
         headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000,
       });
       dispatch({ type: "SET_MESSAGES", payload: Array.isArray(res.data) ? res.data : [] });
     } catch (err) {
+      if (attempt < 3 && err.message === "Network Error") {
+        await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+        return fetchMessages(attempt + 1);
+      }
       console.error("Error fetching messages:", err.response?.data || err.message);
       dispatch({
         type: "SET_ERROR",
@@ -550,51 +600,88 @@ function ChatWithOthers() {
     }
   }, [token, state.currentUser._id]);
 
+  const fetchUserDetails = useCallback(async (attempt = 1) => {
+    dispatch({ type: "SET_STATUS", payload: { isLoadingUser: true } });
+    try {
+      const userRes = await axiosInstance.get("/auth/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000,
+      });
+      dispatch({ type: "SET_CURRENT_USER", payload: userRes.data?.user || {} });
+    } catch (err) {
+      if (attempt < 3 && err.message === "Network Error") {
+        await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+        return fetchUserDetails(attempt + 1);
+      }
+      console.error("Error fetching user details:", err.response?.data || err.message);
+      dispatch({
+        type: "SET_ERROR",
+        payload: err.response?.status === 401 ? "Unauthorized. Please log in again." : "Failed to load user profile.",
+      });
+    }
+  }, [token]);
+
+  const fetchMembers = useCallback(async (attempt = 1) => {
+    try {
+      const membersRes = await axiosInstance.get("/auth/members", {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000,
+      });
+      const membersData = Array.isArray(membersRes.data) ? membersRes.data : [];
+      if (state.currentUser._id && !membersData.some((m) => m._id === state.currentUser._id)) {
+        membersData.push(state.currentUser);
+      }
+      dispatch({
+        type: "SET_MEMBERS",
+        payload: membersData.sort((a, b) => (a.role === "admin" && b.role !== "admin" ? -1 : b.role === "admin" && a.role !== "admin" ? 1 : 0)),
+      });
+    } catch (err) {
+      if (attempt < 3 && err.message === "Network Error") {
+        await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+        return fetchMembers(attempt + 1);
+      }
+      console.error("Error fetching members:", err.response?.data || err.message);
+      dispatch({ type: "SET_ERROR", payload: "Failed to load members list." });
+    }
+  }, [token, state.currentUser._id]);
+
+  const uploadFileToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append("files", file);
+
+    try {
+      const res = await axiosInstance.post("/messages/upload", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+        timeout: 30000,
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          dispatch({ type: "SET_UPLOAD_PROGRESS", payload: percent });
+        },
+      });
+      return res.data[0];
+    } catch (err) {
+      console.error("File upload failed:", err.response?.data || err.message);
+      throw new Error(err.response?.data?.error || "Failed to upload file.");
+    }
+  };
+
   useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        dispatch({ type: "SET_STATUS", payload: { isLoadingUser: true } });
-        const userRes = await axiosInstance.get("/auth/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        dispatch({ type: "SET_CURRENT_USER", payload: userRes.data?.user || {} });
-      } catch (err) {
-        console.error("Error fetching user details:", err.response?.data || err.message);
-        dispatch({
-          type: "SET_ERROR",
-          payload: err.response?.status === 401 ? "Unauthorized. Please log in again." : "Failed to load user profile.",
-        });
-      }
-    };
-
-    const fetchMembers = async () => {
-      try {
-        const membersRes = await axiosInstance.get("/auth/members", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const membersData = Array.isArray(membersRes.data) ? membersRes.data : [];
-        if (state.currentUser._id && !membersData.some((m) => m._id === state.currentUser._id)) {
-          membersData.push(state.currentUser);
-        }
-        dispatch({
-          type: "SET_MEMBERS",
-          payload: membersData.sort((a, b) => (a.role === "admin" && b.role !== "admin" ? -1 : b.role === "admin" && a.role !== "admin" ? 1 : 0)),
-        });
-      } catch (err) {
-        console.error("Error fetching members:", err.response?.data || err.message);
-        dispatch({ type: "SET_ERROR", payload: "Failed to load members list." });
-      }
-    };
-
     if (token) {
       fetchUserDetails();
-      if (state.currentUser._id) {
-        fetchMembers();
-      }
     } else {
       dispatch({ type: "SET_ERROR", payload: "No authentication token found. Please log in." });
     }
-  }, [token, state.currentUser._id]);
+  }, [token, fetchUserDetails]);
+
+  useEffect(() => {
+    if (state.currentUser._id) {
+      fetchMembers();
+      fetchMessages();
+    }
+  }, [state.currentUser._id, fetchMembers, fetchMessages]);
 
   useEffect(() => {
     if (!token) return;
@@ -602,18 +689,20 @@ function ChatWithOthers() {
     socketRef.current = io(SOCKET_URL, {
       auth: { token },
       transports: ["websocket", "polling"],
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
+      timeout: 15000,
     });
 
     socketRef.current.on("connect", () => {
       console.log("Connected to socket:", socketRef.current.id);
+      fetchMessages();
     });
 
     socketRef.current.on("connect_error", (err) => {
       console.error("Socket connection error:", err.message);
-      dispatch({ type: "SET_ERROR", payload: `Failed to connect to chat server: ${err.message}.` });
+      dispatch({ type: "SET_ERROR", payload: `Connection failed: ${err.message}. Retrying...` });
     });
 
     socketRef.current.on("error", ({ error }) => {
@@ -636,10 +725,6 @@ function ChatWithOthers() {
     socketRef.current.on("messageRead", (message) => {
       if (message.readBy?.some((r) => r._id === state.currentUser._id)) {
         dispatch({ type: "EDIT_MESSAGE", payload: message });
-        dispatch({
-          type: "SET_UNREAD_COUNT",
-          payload: state.messages.filter((m) => !m.readBy?.some((r) => r._id === state.currentUser._id)).length,
-        });
       }
     });
 
@@ -655,11 +740,7 @@ function ChatWithOthers() {
       socketRef.current?.off();
       socketRef.current?.disconnect();
     };
-  }, [token, state.currentUser._id]);
-
-  useEffect(() => {
-    fetchMessages();
-  }, [fetchMessages]);
+  }, [token, state.currentUser._id, fetchMessages]);
 
   useEffect(() => {
     if (!state.currentUser._id || !state.messages.length) return;
@@ -672,7 +753,10 @@ function ChatWithOthers() {
             const message = state.messages.find((m) => m._id === messageId);
             if (message && !message.readBy?.some((r) => r._id === state.currentUser._id)) {
               try {
-                await axiosInstance.put(`/messages/${messageId}/read`, {}, { headers: { Authorization: `Bearer ${token}` } });
+                await axiosInstance.put(`/messages/${messageId}/read`, {}, {
+                  headers: { Authorization: `Bearer ${token}` },
+                  timeout: 10000,
+                });
                 socketRef.current.emit("markAsRead", messageId);
               } catch (err) {
                 console.error("Error marking message as read:", err.response?.data || err.message);
@@ -693,7 +777,15 @@ function ChatWithOthers() {
   }, [state.messages, state.currentUser._id, token]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      const messageList = messagesEndRef.current.parentElement;
+      const isAtBottom =
+        messageList.scrollHeight - messageList.scrollTop <=
+        messageList.clientHeight + 50;
+      if (isAtBottom) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    }
   }, [state.messages]);
 
   useEffect(() => {
@@ -713,6 +805,25 @@ function ChatWithOthers() {
     }
   }, [state.errorMessage]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setHeaderHeight(window.innerWidth >= 768 ? 80 : 64);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--header-height",
+      `${headerHeight}px`
+    );
+    document.documentElement.style.setProperty(
+      "--error-message-height",
+      state.errorMessage ? "48px" : "0px"
+    );
+  }, [headerHeight, state.errorMessage]);
+
   const handleTyping = useCallback(() => {
     if (!typingTimeoutRef.current && state.currentUser._id) {
       socketRef.current.emit("typing");
@@ -723,33 +834,39 @@ function ChatWithOthers() {
     }
   }, [state.currentUser._id]);
 
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(async (attempt = 1) => {
     if (isSendingRef.current || (!state.newMessage.trim() && !state.selectedFiles.length)) return;
 
     isSendingRef.current = true;
     dispatch({ type: "SET_STATUS", payload: { isSending: true, isUpdating: !!state.editingMessageId } });
     dispatch({ type: "SET_ERROR", payload: "" });
+    dispatch({ type: "SET_UPLOAD_PROGRESS", payload: 0 });
 
     try {
-      const formData = new FormData();
-      if (state.newMessage.trim()) formData.append("content", state.newMessage);
-      state.selectedFiles.forEach((file) => formData.append("files", file));
+      let uploadedFiles = [];
+      if (state.selectedFiles.length > 0) {
+        const uploadPromises = state.selectedFiles.map((file) =>
+          uploadFileToCloudinary(file)
+        );
+        uploadedFiles = await Promise.all(uploadPromises);
+      }
+
+      const payload = { content: state.newMessage.trim() };
+      if (uploadedFiles.length > 0) payload.files = uploadedFiles;
 
       if (state.editingMessageId) {
         const res = await axiosInstance.put(
           `/messages/${state.editingMessageId}`,
-          { content: state.newMessage },
-          { headers: { Authorization: `Bearer ${token}` } }
+          payload,
+          { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }
         );
         socketRef.current.emit("editMessage", res.data);
         dispatch({ type: "EDIT_MESSAGE", payload: res.data });
         dispatch({ type: "SET_EDITING_MESSAGE", payload: { id: null, content: "" } });
       } else {
-        const res = await axiosInstance.post("/messages", formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
+        const res = await axiosInstance.post("/messages", payload, {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 10000,
         });
         dispatch({ type: "ADD_MESSAGE", payload: res.data });
       }
@@ -757,6 +874,10 @@ function ChatWithOthers() {
       dispatch({ type: "SET_SELECTED_FILES", payload: [] });
       await fetchMessages();
     } catch (err) {
+      if (attempt < 3 && err.message === "Network Error") {
+        await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+        return handleSend(attempt + 1);
+      }
       console.error("Send failed:", err.response?.data || err.message);
       dispatch({
         type: "SET_ERROR",
@@ -770,17 +891,22 @@ function ChatWithOthers() {
     } finally {
       isSendingRef.current = false;
       dispatch({ type: "SET_STATUS", payload: { isSending: false, isUpdating: false } });
+      dispatch({ type: "SET_UPLOAD_PROGRESS", payload: 0 });
     }
   }, [state.newMessage, state.selectedFiles, state.editingMessageId, token, fetchMessages]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, attempt = 1) => {
     dispatch({ type: "SET_STATUS", payload: { isDeleting: true } });
     dispatch({ type: "SET_ERROR", payload: "" });
     try {
-      await axiosInstance.delete(`/messages/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axiosInstance.delete(`/messages/${id}`, { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 });
       socketRef.current.emit("deleteMessage", { messageId: id });
       await fetchMessages();
     } catch (err) {
+      if (attempt < 3 && err.message === "Network Error") {
+        await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+        return handleDelete(id, attempt + 1);
+      }
       console.error("Delete failed:", err.response?.data || err.message);
       dispatch({
         type: "SET_ERROR",
@@ -805,16 +931,6 @@ function ChatWithOthers() {
       startEdit(state.selectedMessage);
     }
     dispatch({ type: "SET_MODAL", payload: false });
-  };
-
-  const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files || []);
-    const validFiles = files.filter((file) => allowedFileTypes.includes(file.type) && file.size <= maxFileSize);
-    if (validFiles.length !== files.length) {
-      dispatch({ type: "SET_ERROR", payload: "Some files were rejected (unsupported type or too large)." });
-    }
-    dispatch({ type: "SET_SELECTED_FILES", payload: [...state.selectedFiles, ...validFiles] });
-    e.target.value = "";
   };
 
   const handleKeyPress = (e) => {
@@ -855,7 +971,7 @@ function ChatWithOthers() {
       <style>
         {`
           :root {
-            --header-height: 64px;
+            --header-height: ${headerHeight}px;
             --tenant-header-height: 64px;
             --error-message-height: ${state.errorMessage ? "48px" : "0px"};
             --message-input-height: 80px;
@@ -888,20 +1004,23 @@ function ChatWithOthers() {
           }
 
           main {
-            margin-top: var(--header-height);
+            // margin-top: headerHeight;
             height: calc(100vh - var(--header-height));
-            overflow: hidden;
             margin-left: 0;
             transition: margin-left 0.3s ease-in-out;
             display: flex;
             flex-direction: column;
+            min-height: 0;
           }
 
           .chat-container {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            max-height: calc(100vh - var(--header-height));
+            margin-top: 0;
+            padding-top: 0;
             flex: 1;
+            min-height: 0;
           }
 
           .tenant-header {
@@ -914,6 +1033,8 @@ function ChatWithOthers() {
             position: sticky;
             top: 0;
             z-index: 30;
+            height: var(--tenant-header-height);
+            margin-top: 0;
           }
 
           .error-message {
@@ -927,12 +1048,14 @@ function ChatWithOthers() {
             position: sticky;
             top: var(--tenant-header-height);
             z-index: 25;
+            height: var(--error-message-height);
           }
 
           .message-list {
             flex: 1;
             overflow-y: auto;
             padding: 1rem;
+            min-height: 0;
             height: calc(100vh - var(--header-height) - var(--tenant-header-height) - var(--error-message-height) - var(--message-input-height));
           }
 
@@ -986,6 +1109,7 @@ function ChatWithOthers() {
             z-index: 20;
             padding: 1rem;
             border-top: 1px solid #e5e7eb;
+            height: var(--message-input-height);
           }
 
           .members-panel {
@@ -999,16 +1123,13 @@ function ChatWithOthers() {
             z-index: 40;
             width: 100%;
             max-width: 80%;
+            transform: ${sidesheetOpen ? "translateX(0)" : "translateX(100%)"};
           }
 
           @media (min-width: 640px) {
             .members-panel {
               max-width: 20rem;
             }
-          }
-
-          .sidebar-open .members-panel {
-            transform: translateX(100%);
           }
 
           .modal {
@@ -1043,10 +1164,14 @@ function ChatWithOthers() {
           <DashboardHeader setSidebarOpen={setSidebarOpen} />
         </header>
 
-        <div className="flex flex-1">
-          <DashboardSidebar open={sidebarOpen} setOpen={setSidebarOpen} className="sidebar" />
-
-          <main className={`flex-1 bg-gray-50 main-content ${sidebarOpen ? "lg:ml-64" : ""}`}>
+        <div className="flex flex-1 relative" style={{ marginTop: `var(--header-height)` }}>
+          <DashboardSidebar
+            open={sidebarOpen}
+            setOpen={setSidebarOpen}
+            headerHeight={headerHeight}
+            className="sidebar"
+          />
+          <main className={`flex-1 bg-gray-50 main-content ${sidebarOpen ? "lg:ml-64 ml-0" : "ml-0"}`}>
             <div className="chat-container">
               <div className="tenant-header">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-800">{state.currentUser.tenantName || "Default Tenant"}</h2>
@@ -1104,7 +1229,6 @@ function ChatWithOthers() {
                 state={state}
                 dispatch={dispatch}
                 handleSend={handleSend}
-                handleFileSelect={handleFileSelect}
                 handleKeyPress={handleKeyPress}
                 handleDrop={handleDrop}
                 handleDragOver={handleDragOver}

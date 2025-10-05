@@ -10,6 +10,7 @@ import AcceptInvitePage from "./components/common/AcceptInvite";
 import VideoConference from "./components/VideoConferencePage";
 import VideoConferencePage from "./components/VideoConferencePage/VideoConferencePage";
 import ChatWithOthers from "./components/ChatWithOthersPage";
+import MyProfile from "./components/common/MyProfile";
 
 function App(){
   return(
@@ -25,6 +26,7 @@ function App(){
         <Route path="/video-conference" element={<VideoConference/>}/>
         <Route path="/video-conference/:roomId" element={<VideoConferencePage/>}/>
         <Route path="/chat" element={<ChatWithOthers/>}/> 
+        <Route path="/my-profile" element={<MyProfile/>}/>
         
       </Routes>
 

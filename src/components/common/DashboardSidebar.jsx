@@ -9,7 +9,7 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
-export default function DashboardSidebar() {
+export default function DashboardSidebar({ headerHeight }) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -34,9 +34,12 @@ export default function DashboardSidebar() {
       <div
         className={`lg:w-64 w-64 h-screen bg-white shadow-lg border-r-2 border-[#e2e2e2] 
         transform transition-transform duration-300 ease-in-out z-40
-        fixed top-0 left-0 pt-[70px] lg:pt-0
+        fixed left-0 pt-[70px] lg:pt-0
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-        lg:translate-x-0 lg:relative`}
+        lg:translate-x-0 lg:static`}
+        style={{
+          top: `${headerHeight}px`,
+        }}
       >
         <div className="flex flex-col items-start p-6 space-y-8">
           {/* Sidebar Links */}
@@ -67,6 +70,10 @@ export default function DashboardSidebar() {
     </>
   );
 }
+
+DashboardSidebar.propTypes = {
+  headerHeight: PropTypes.number.isRequired,
+};
 
 function SidebarLink({ icon, label, onClick }) {
   return (
