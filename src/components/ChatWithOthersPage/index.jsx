@@ -375,7 +375,7 @@ function MessageInput({
       onDragLeave={handleDragLeave}
     >
       {state.selectedFiles.length > 0 && (
-        <div className="mb-2 space-y-2">
+        <div className="file-preview-container">
           {state.selectedFiles.map((file, idx) => (
             <PreviewFile
               key={idx}
@@ -389,7 +389,7 @@ function MessageInput({
             />
           ))}
           {state.status.isSending && (
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
               <div
                 className="bg-blue-600 h-2.5 rounded-full"
                 style={{ width: `${state.uploadProgress}%` }}
@@ -398,7 +398,7 @@ function MessageInput({
           )}
         </div>
       )}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <input
           type="text"
           placeholder="Type a message..."
@@ -974,7 +974,9 @@ function ChatWithOthers() {
             --header-height: ${headerHeight}px;
             --tenant-header-height: 64px;
             --error-message-height: ${state.errorMessage ? "48px" : "0px"};
-            --message-input-height: 80px;
+            --message-input-base-height: 80px;
+            --file-preview-max-height: 120px;
+            --message-input-height: ${state.selectedFiles.length > 0 ? "calc(var(--message-input-base-height) + var(--file-preview-max-height))" : "var(--message-input-base-height)"};
           }
 
           html, body {
@@ -1004,7 +1006,6 @@ function ChatWithOthers() {
           }
 
           main {
-            // margin-top: headerHeight;
             height: calc(100vh - var(--header-height));
             margin-left: 0;
             transition: margin-left 0.3s ease-in-out;
@@ -1016,7 +1017,7 @@ function ChatWithOthers() {
           .chat-container {
             display: flex;
             flex-direction: column;
-            max-height: calc(100vh - var(--header-height));
+            height: calc(100vh - var(--header-height));
             margin-top: 0;
             padding-top: 0;
             flex: 1;
@@ -1034,7 +1035,6 @@ function ChatWithOthers() {
             top: 0;
             z-index: 30;
             height: var(--tenant-header-height);
-            margin-top: 0;
           }
 
           .error-message {
@@ -1109,7 +1109,50 @@ function ChatWithOthers() {
             z-index: 20;
             padding: 1rem;
             border-top: 1px solid #e5e7eb;
-            height: var(--message-input-height);
+            max-height: var(--message-input-height);
+            display: flex;
+            flex-direction: column;
+          }
+
+          .message-input-container::-webkit-scrollbar {
+            width: 6px;
+          }
+
+          .message-input-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+          }
+
+          .message-input-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+          }
+
+          .message-input-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+          }
+
+          .file-preview-container {
+            max-height: var(--file-preview-max-height);
+            overflow-y: auto;
+            margin-bottom: 0.5rem;
+            order: -1; /* Ensures file previews appear above input */
+          }
+
+          .file-preview-container::-webkit-scrollbar {
+            width: 6px;
+          }
+
+          .file-preview-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+          }
+
+          .file-preview-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+          }
+
+          .file-preview-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
           }
 
           .members-panel {
